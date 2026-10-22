@@ -5,39 +5,44 @@
 //  Created by Deltrin Sam on 10/07/25.
 //
 
-
 import SwiftUI
-import AVFoundation
 
+/// Shows a `ProgressIndicatorView` and plays a looping sound while it is on screen.
 public struct ProgressIndicatorWrapper: View {
+    @State private var isVisible = false
+
     private let messageProvider: ProgressMessageProvider
-    private let audioPlayer: BackgroundAudioPlayable?
-    private let audioURL: URL?
     private let shouldPlayAudio: Bool
- 
+    private let playback: AudioPlaybackControl
+
+    /// - Parameters:
+    ///   - messageProvider: Supplies the messages shown next to the dots.
+    ///   - audioPlayer: Plays the sound. Keep one instance alive in the caller and pass it in.
+    ///   - audioURL: The sound to loop. Defaults to the file bundled with the package.
+    ///   - shouldPlayAudio: Turn audio on or off. Changes take effect while the view is showing.
     public init(
         messageProvider: ProgressMessageProvider,
         audioPlayer: BackgroundAudioPlayable?,
-        audioURL: URL?,
+        audioURL: URL? = ProgressIndicatorAudio.defaultURL,
         shouldPlayAudio: Bool
     ) {
         self.messageProvider = messageProvider
-        self.audioPlayer = audioPlayer
-        self.audioURL = audioURL
         self.shouldPlayAudio = shouldPlayAudio
+        self.playback = AudioPlaybackControl(player: audioPlayer, url: audioURL)
     }
- 
+
     public var body: some View {
         ProgressIndicatorView(messageProvider: messageProvider)
             .onAppear {
-                if shouldPlayAudio, let url = audioURL {
-                    audioPlayer?.play(from: url)
-                }
+                isVisible = true
+                playback.update(isVisible: true, shouldPlay: shouldPlayAudio)
             }
             .onDisappear {
-                if shouldPlayAudio {
-                    audioPlayer?.stop()
-                }
+                isVisible = false
+                playback.update(isVisible: false, shouldPlay: shouldPlayAudio)
+            }
+            .onChange(of: shouldPlayAudio) { newValue in
+                playback.update(isVisible: isVisible, shouldPlay: newValue)
             }
     }
 }

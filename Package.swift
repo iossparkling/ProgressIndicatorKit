@@ -12,7 +12,11 @@ let package = Package(
     targets: [
         .target(
             name: "ProgressIndicatorKit",
-            dependencies: []
+            dependencies: [],
+            resources: [
+                // Bundles background.mp3 so `ProgressIndicatorAudio.defaultURL` can find it.
+                .process("Resources")
+            ]
         ),
         .testTarget(
             name: "ProgressIndicatorKitTests",
